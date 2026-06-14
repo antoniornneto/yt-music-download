@@ -59,10 +59,12 @@ def preparar_ffmpeg():
     conversao para MP3 nao acontecia.
     """
     if getattr(sys, "frozen", False):
-        # Dentro do exe: procuramos o ffmpeg.exe em qualquer lugar do pacote
-        # descompactado (sys._MEIPASS), sem supor a subpasta exata.
+        # Dentro do executavel: procuramos o ffmpeg em qualquer lugar do pacote
+        # descompactado (sys._MEIPASS), sem supor a subpasta exata. No Windows o
+        # binario se chama "ffmpeg.exe"; no macOS e no Linux, apenas "ffmpeg".
         base = Path(sys._MEIPASS)
-        achados = list(base.rglob("ffmpeg.exe"))
+        nome_ffmpeg = "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
+        achados = list(base.rglob(nome_ffmpeg))
         pasta_ffmpeg = achados[0].parent if achados else base
         # Tambem colocamos no PATH (ajuda o ffprobe a ser encontrado).
         os.environ["PATH"] = str(pasta_ffmpeg) + os.pathsep + os.environ.get("PATH", "")
@@ -177,14 +179,15 @@ def _diagnostico():
     """
     import shutil
 
+    sufixo = ".exe" if sys.platform == "win32" else ""
     pasta = preparar_ffmpeg()
     print("frozen:", getattr(sys, "frozen", False))
     print("_MEIPASS:", getattr(sys, "_MEIPASS", None))
     print("pasta_ffmpeg retornada:", pasta)
     print("shutil.which('ffmpeg'):", shutil.which("ffmpeg"))
     print("shutil.which('ffprobe'):", shutil.which("ffprobe"))
-    print("ffmpeg.exe existe na pasta?:", (Path(pasta) / "ffmpeg.exe").exists())
-    print("ffprobe.exe existe na pasta?:", (Path(pasta) / "ffprobe.exe").exists())
+    print(f"ffmpeg{sufixo} existe na pasta?:", (Path(pasta) / f"ffmpeg{sufixo}").exists())
+    print(f"ffprobe{sufixo} existe na pasta?:", (Path(pasta) / f"ffprobe{sufixo}").exists())
 
 
 # Esta linha faz o programa rodar a funcao main() so quando voce executa

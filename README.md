@@ -4,6 +4,27 @@ Programa de terminal simples, em Python, para baixar o áudio de vídeos do
 YouTube em MP3. Pensado para ser fácil de usar: cole o link, escolha a
 qualidade, escolha a pasta e pronto.
 
+É o **mesmo programa** para Windows, macOS e Linux: um único código-fonte.
+O que muda é só o executável final, que tem um formato por sistema.
+
+## Baixar pronto (não precisa instalar Python)
+
+Pegue o executável do seu sistema na página de
+[**Releases**](https://github.com/antoniornneto/yt-music-download/releases):
+
+| Sistema   | Arquivo                     | Como abrir                                              |
+|-----------|-----------------------------|--------------------------------------------------------|
+| Windows   | `BaixarMusica-Windows.exe`  | Dois cliques.                                           |
+| macOS     | `BaixarMusica-macOS`        | No Terminal: `chmod +x BaixarMusica-macOS` e depois `./BaixarMusica-macOS`. |
+| Linux     | `BaixarMusica-Linux`        | No Terminal: `chmod +x BaixarMusica-Linux` e depois `./BaixarMusica-Linux`. |
+
+> **macOS:** na primeira vez o sistema pode bloquear por ser de
+> desenvolvedor não identificado. Vá em **Ajustes → Privacidade e Segurança**
+> e clique em **Abrir mesmo assim** (ou rode `xattr -dr com.apple.quarantine
+> BaixarMusica-macOS`).
+
+Cada binário já vem com o `ffmpeg` embutido, então não precisa instalar nada.
+
 ## Como instalar (só na primeira vez)
 
 1. Instale o **Python 3.9 ou mais novo**: https://www.python.org/downloads/

@@ -1,0 +1,63 @@
+name: Build e Release multiplataforma
+
+# Dispara quando uma tag de versao (ex.: v1.2) e enviada para o GitHub.
+# O PyInstaller NAO faz "cross-compile": ele so gera o binario do sistema em
+# que roda. Por isso compilamos em paralelo no Windows, no macOS e no Linux,
+# e juntamos os tres arquivos numa unica Release.
+on:
+  push:
+    tags:
+      - "v*"
+  # Permite tambem disparar manualmente pela aba "Actions" do GitHub.
+  workflow_dispatch:
+
+permissions:
+  contents: write  # necessario para criar/atualizar a Release
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            origem: dist/BaixarMusica.exe
+            destino: BaixarMusica-Windows.exe
+          - os: macos-latest
+            origem: dist/BaixarMusica
+            destino: BaixarMusica-macOS
+          - os: ubuntu-latest
+            origem: dist/BaixarMusica
+            destino: BaixarMusica-Linux
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Gerar o executavel
+        run: python build.py
+
+      - name: Renomear binario por sistema
+        shell: bash
+        run: |
+          mkdir -p release
+          cp "${{ matrix.origem }}" "release/${{ matrix.destino }}"
+
+      - name: Publicar na Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/${{ matrix.destino }}
+          fail_on_unmatched_files: true

@@ -57,7 +57,13 @@ def main():
     print("\nGerando o executavel... (isso leva alguns minutos)\n")
     PyInstaller.__main__.run(argumentos)
 
-    print(f"\nPronto! O executavel esta em:  dist/{NOME_DO_APP}.exe")
+    # No Windows o PyInstaller acrescenta ".exe"; no macOS e no Linux o binario
+    # sai sem extensao. Importante: o PyInstaller NAO faz "cross-compile" — ele
+    # so gera o binario do sistema em que esta rodando. Para ter os tres
+    # (Windows, macOS, Linux) rodamos este build em cada sistema (ver o workflow
+    # em .github/workflows/build.yml, que compila os tres no GitHub Actions).
+    sufixo = ".exe" if sys.platform == "win32" else ""
+    print(f"\nPronto! O executavel esta em:  dist/{NOME_DO_APP}{sufixo}")
 
 
 if __name__ == "__main__":
