@@ -78,7 +78,7 @@ def obter_info(url):
         raise DownloadError(str(e))
 
 
-def baixar_audio(url, bitrate, pasta_destino, progress_hook=None):
+def baixar_audio(url, bitrate, pasta_destino, pasta_ffmpeg=None, progress_hook=None):
     """
     Baixa o audio do video e converte para MP3.
 
@@ -86,6 +86,10 @@ def baixar_audio(url, bitrate, pasta_destino, progress_hook=None):
     - url: o link do video.
     - bitrate: a qualidade em kbps como texto, ex.: "192".
     - pasta_destino: onde salvar (objeto Path ou texto).
+    - pasta_ffmpeg: a PASTA onde estao o ffmpeg.exe e o ffprobe.exe. Informar
+      isso ao yt-dlp (via "ffmpeg_location") garante que a conversao para MP3
+      funcione mesmo dentro do executavel, onde depender do PATH nao era
+      confiavel. Se for None, o yt-dlp procura o ffmpeg sozinho no PATH.
     - progress_hook: uma funcao opcional que o yt-dlp chama varias vezes
       durante o download, informando o progresso. Usamos isso para mover a
       barra de progresso. (Veremos no ui.py.)
@@ -111,6 +115,10 @@ def baixar_audio(url, bitrate, pasta_destino, progress_hook=None):
             }
         ],
     })
+
+    # Se sabemos onde o ffmpeg esta, dizemos isso explicitamente ao yt-dlp.
+    if pasta_ffmpeg:
+        opcoes["ffmpeg_location"] = str(pasta_ffmpeg)
 
     # So adicionamos o hook se ele foi passado.
     if progress_hook is not None:

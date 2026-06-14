@@ -52,14 +52,28 @@ def preparar_ffmpeg():
 
     O getattr(sys, "frozen", False) e o jeito padrao de saber se estamos
     rodando "congelados" dentro de um exe.
+
+    RETORNA a PASTA onde estao o ffmpeg.exe e o ffprobe.exe. Esse caminho e
+    entregue depois ao yt-dlp (opcao "ffmpeg_location"), o que e mais confiavel
+    do que so mexer no PATH: dentro do exe, depender do PATH falhava e a
+    conversao para MP3 nao acontecia.
     """
     if getattr(sys, "frozen", False):
-        pasta_do_exe = Path(sys._MEIPASS)
-        os.environ["PATH"] = str(pasta_do_exe) + os.pathsep + os.environ.get("PATH", "")
+        # Dentro do exe: procuramos o ffmpeg.exe em qualquer lugar do pacote
+        # descompactado (sys._MEIPASS), sem supor a subpasta exata.
+        base = Path(sys._MEIPASS)
+        achados = list(base.rglob("ffmpeg.exe"))
+        pasta_ffmpeg = achados[0].parent if achados else base
+        # Tambem colocamos no PATH (ajuda o ffprobe a ser encontrado).
+        os.environ["PATH"] = str(pasta_ffmpeg) + os.pathsep + os.environ.get("PATH", "")
+        return str(pasta_ffmpeg)
     else:
         with ui.console.status("[cyan]Preparando componentes (pode demorar na 1a vez)..."):
             import static_ffmpeg
+            from static_ffmpeg import run
             static_ffmpeg.add_paths()
+            ffmpeg_exe, _ffprobe = run.get_or_fetch_platform_executables_else_raise()
+            return str(Path(ffmpeg_exe).parent)
 
 
 def pasta_padrao():
@@ -72,9 +86,12 @@ def pasta_padrao():
     return Path.home() / "Downloads" / "Musicas"
 
 
-def baixar_uma_musica():
+def baixar_uma_musica(pasta_ffmpeg):
     """
     Executa o fluxo completo de UMA musica, do link ate o arquivo salvo.
+
+    'pasta_ffmpeg' e a pasta onde esta o ffmpeg (descoberta em preparar_ffmpeg),
+    repassada ao downloader para a conversao em MP3 funcionar.
 
     Retorna True se baixou com sucesso, False se algo impediu (e ja avisou o
     usuario). Nao deixa erros "vazarem": tudo vira mensagem amigavel.
@@ -117,7 +134,7 @@ def baixar_uma_musica():
     # 5) Baixar de fato, com barra de progresso ---------------------------
     try:
         with ui.BarraDeProgresso() as barra:
-            baixar_audio(url, bitrate, pasta, progress_hook=barra.hook)
+            baixar_audio(url, bitrate, pasta, pasta_ffmpeg, progress_hook=barra.hook)
     except DownloadError:
         ui.erro("Algo deu errado durante o download. Verifique sua internet e tente de novo.")
         return False
@@ -137,7 +154,7 @@ def main():
 
     # Preparar o ffmpeg. Se falhar, avisamos e encerramos com calma.
     try:
-        preparar_ffmpeg()
+        pasta_ffmpeg = preparar_ffmpeg()
     except Exception:
         ui.erro("Nao consegui preparar o componente de audio (ffmpeg). "
                 "Verifique sua internet e tente de novo.")
@@ -145,16 +162,37 @@ def main():
 
     # Laco principal: baixa uma musica e pergunta se quer outra.
     while True:
-        baixar_uma_musica()
+        baixar_uma_musica(pasta_ffmpeg)
         if not ui.perguntar_outro():
             break
 
     ui.console.print("\n[bold green]Ate a proxima![/bold green]")
 
 
+def _diagnostico():
+    """
+    Modo tecnico (nao para o usuario final). Rode "BaixarMusica.exe --diag"
+    para verificar se o ffmpeg foi embutido e esta sendo encontrado. Serve
+    para depurar problemas sem precisar abrir os menus interativos.
+    """
+    import shutil
+
+    pasta = preparar_ffmpeg()
+    print("frozen:", getattr(sys, "frozen", False))
+    print("_MEIPASS:", getattr(sys, "_MEIPASS", None))
+    print("pasta_ffmpeg retornada:", pasta)
+    print("shutil.which('ffmpeg'):", shutil.which("ffmpeg"))
+    print("shutil.which('ffprobe'):", shutil.which("ffprobe"))
+    print("ffmpeg.exe existe na pasta?:", (Path(pasta) / "ffmpeg.exe").exists())
+    print("ffprobe.exe existe na pasta?:", (Path(pasta) / "ffprobe.exe").exists())
+
+
 # Esta linha faz o programa rodar a funcao main() so quando voce executa
 # "python main.py" diretamente (e nao quando outro arquivo o importa).
 if __name__ == "__main__":
+    if "--diag" in sys.argv:
+        _diagnostico()
+        sys.exit(0)
     try:
         main()
     except KeyboardInterrupt:
