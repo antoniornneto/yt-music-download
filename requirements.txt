@@ -1,0 +1,7 @@
+# Bibliotecas que o programa precisa.
+# Instale tudo de uma vez com:  pip install -r requirements.txt
+
+yt-dlp            # baixa o video/audio do YouTube (e de muitos outros sites)
+rich              # deixa o terminal bonito: cores, mensagens, barra de progresso
+questionary       # menus navegaveis pelas setas do teclado (Sim/Nao, qualidade)
+static-ffmpeg     # baixa o "ffmpeg" automaticamente (necessario para gerar o MP3)

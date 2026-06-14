@@ -1,0 +1,12 @@
+# Pastas geradas pelo PyInstaller ao criar o executavel
+build/
+dist/
+*.spec
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Ambientes virtuais (caso voce use)
+.venv/
+venv/
